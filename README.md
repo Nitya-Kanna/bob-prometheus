@@ -26,7 +26,22 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 2. Install Prometheus MCP Server
+### 2. Configure Environment Variables
+
+Copy the example environment file and add your tokens:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and add your actual values:
+- `GRAFANA_SERVICE_ACCOUNT_TOKEN` - Your Grafana service account token
+- `GRAFANA_URL` - Grafana server URL (default: http://localhost:3000)
+- `PROMETHEUS_URL` - Prometheus server URL (default: http://localhost:9090)
+
+**Important:** Never commit the `.env` file to version control. It contains sensitive tokens.
+
+### 3. Install Prometheus MCP Server
 
 ```bash
 cd prometheus-mcp
@@ -34,7 +49,7 @@ uv pip install -e .
 cd ..
 ```
 
-### 3. Start Services
+### 4. Start Services
 
 ```bash
 # Start Docker (or Colima on macOS)
@@ -52,9 +67,9 @@ docker run -d --name node-exporter \
   prom/node-exporter:latest
 ```
 
-### 4. Configure MCP Server
+### 5. Configure MCP Servers
 
-Add to your MCP settings file:
+Add to your MCP settings file (e.g., `.bob/settings/mcp_settings.json`):
 
 ```json
 {
@@ -65,10 +80,37 @@ Add to your MCP settings file:
       "env": {
         "PROMETHEUS_URL": "http://localhost:9090"
       }
+    },
+    "grafana": {
+      "command": "uvx",
+      "args": ["mcp-grafana"],
+      "env": {
+        "GRAFANA_URL": "http://localhost:3000",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "your_token_here"
+      }
     }
   }
 }
 ```
+
+**Security Note:** For production use, consider loading tokens from environment variables in your MCP settings instead of hardcoding them.
+
+### 6. Start Grafana (Optional)
+
+If you want to use Grafana for visualization:
+
+```bash
+docker run -d --name grafana \
+  -p 3000:3000 \
+  grafana/grafana:latest
+```
+
+Access Grafana at http://localhost:3000 (default credentials: admin/admin)
+
+**Create a Service Account Token:**
+1. Go to Administration → Service Accounts
+2. Create a new service account with Admin role
+3. Generate a token and save it to your `.env` file
 
 ## Available Metrics
 
